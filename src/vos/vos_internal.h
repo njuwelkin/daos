@@ -55,6 +55,7 @@
 		case -DER_INPROGRESS:			\
 		case -DER_EXIST:			\
 		case -DER_NONEXIST:			\
+		case -DER_TX_UNCERTAINTY:		\
 			__is_err = false;		\
 			break;				\
 		}					\
@@ -73,6 +74,7 @@
 		case -DER_INPROGRESS:			\
 		case -DER_EXIST:			\
 		case -DER_NONEXIST:			\
+		case -DER_TX_UNCERTAINTY:		\
 			__is_err = false;		\
 			break;				\
 		}					\
@@ -1181,6 +1183,14 @@ vos_epc_punched(daos_epoch_t epc, uint16_t minor_epc,
 		return true;
 
 	return false;
+}
+
+static inline bool
+vos_detect_dtx_uncertainty(void)
+{
+	struct dtx_handle	*dth = vos_dth_get();
+
+	return dth != NULL && dth->dth_share_tbd_count > 0;
 }
 
 static inline bool
