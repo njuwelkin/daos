@@ -34,6 +34,8 @@
 #include <daos_srv/control.h>
 #include <abt.h>
 
+#define DAOS_NVMF_TRADDR_MAX_LEN 256 /* SPDK_NVMF_TRADDR_MAX_LEN */
+
 typedef struct {
 	/*
 	 * Byte offset within PMDK pmemobj pool for SCM;
@@ -686,4 +688,14 @@ bool bio_need_nvme_poll(struct bio_xs_context *xs);
  */
 int bio_replace_dev(struct bio_xs_context *xs, uuid_t old_dev_id,
 		    uuid_t new_dev_id);
+
+/*
+ * Identify a VMD device.
+ *
+ * \param xs            [IN]    xstream context
+ * \param traddr        [IN]    Transport ID of the VMD device
+ *
+ * \return                      Zero on success, negative value on error
+ */
+int bio_identify_dev(struct bio_xs_context *xs, char *traddr);
 #endif /* __BIO_API_H__ */

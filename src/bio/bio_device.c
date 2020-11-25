@@ -26,6 +26,8 @@
 #include <spdk/thread.h>
 #include "bio_internal.h"
 #include <daos_srv/smd.h>
+#include <spdk/env.h>
+#include <spdk/vmd.h>
 
 static int
 revive_dev(struct bio_bdev *d_bdev)
@@ -668,6 +670,83 @@ out:
 			bio_free_dev_info(b_info);
 		}
 		*dev_cnt = 0;
+	}
+
+	return rc;
+}
+
+int
+bio_identify_dev(struct bio_xs_context *xs_ctxt, char *dev_traddr)
+{
+	struct spdk_pci_addr	pci_addr;
+	struct spdk_pci_device *pci_device;
+	char			addr_buf[128];
+	enum spdk_vmd_led_state current_led_state;
+	int			identify_state = SPDK_VMD_LED_STATE_IDENTIFY;
+	int			off_state = SPDK_VMD_LED_STATE_OFF;
+	int			rc = 0;
+	bool			found = false;
+
+	if (spdk_pci_addr_parse(&pci_addr, dev_traddr)) {
+		D_ERROR("Unable to parse PCI address: %s\n", dev_traddr);
+		return -DER_INVAL;
+	}
+
+	for (pci_device = spdk_pci_get_first_device(); pci_device != NULL;
+	     pci_device = spdk_pci_get_next_device(pci_device)) {
+		if (spdk_pci_addr_compare(&pci_addr, &pci_device->addr) == 0) {
+			found = true;
+			break;
+		}
+	}
+
+	if (found) {
+		if (strcmp(spdk_pci_device_get_type(pci_device), "vmd") != 0) {
+			D_ERROR("%s is not a VMD device\n", dev_traddr);
+			return -DER_NOSYS;
+		}
+	} else {
+		D_ERROR("Unable to set led state, VMD device not found\n");
+		return -DER_INVAL;
+	}
+
+	rc = spdk_pci_addr_fmt(addr_buf, sizeof(addr_buf), &pci_device->addr);
+	if (rc != 0) {
+		D_ERROR("Failed to format VMD's PCI address\n");
+		return -DER_INVAL;
+	}
+
+	/* First check the current state of the VMD LED */
+	rc = spdk_vmd_get_led_state(pci_device, &current_led_state);
+	if (rc) {
+		D_ERROR("Failed to get the VMD LED state\n");
+		return -DER_INVAL;
+	}
+
+	if (current_led_state == SPDK_VMD_LED_STATE_IDENTIFY) {
+		D_WARN("LED of device: %s is already in INDENTIFY state\n",
+			dev_traddr);
+	} else if (current_led_state != SPDK_VMD_LED_STATE_OFF) {
+		D_ERROR("LED of device: %s is in an unexpected starting state: %d\n",
+			dev_traddr, current_led_state);
+		return -DER_INVAL;
+	}
+
+	/* Set the IDENTIFY state on the LED */
+	rc = spdk_vmd_set_led_state(pci_device, identify_state);
+	if (rc) {
+		D_ERROR("Failed to set the VMD LED state to IDENTIFY\n");
+		return -DER_INVAL;
+	}
+
+	/* TODO Determine how long to blink LED, is 5 min too short/long? */
+	sleep(300);
+
+	/* Reset the OFF state on the LED */
+	rc = spdk_vmd_set_led_state(pci_device, off_state);
+	if (rc) {
+		D_ERROR("Failed to set the VMD LED state to OFF\n");
+		return -DER_INVAL;
 	}
 
 	return rc;
