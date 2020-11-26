@@ -26,6 +26,7 @@
 #define D_LOGFAC	DD_FAC(swim)
 #define CRT_USE_GURT_FAC
 
+#include <ctype.h>
 #include "crt_internal.h"
 #include "swim/swim_internal.h"
 
@@ -75,27 +76,30 @@ static swim_id_t crt_swim_fail_id;
 static struct d_fault_attr_t *d_fa_swim_drop_rpc;
 
 static void
-crt_swim_fault_init(void)
+crt_swim_fault_init(const char *args)
 {
-	char *end;
-	char *env_val;
+	char	*s, *s_saved, *end, *save_ptr = NULL;
 
-	crt_swim_should_fail = false; /* disabled by default */
-	crt_swim_fail_hlc = 0;
-	crt_swim_fail_delay = 10;
-	crt_swim_fail_id = SWIM_ID_INVALID;
+	D_STRNDUP(s_saved, args, strlen(args));
+	s = s_saved;
+	if (s == NULL)
+		return;
 
-	env_val = getenv("CRT_SWIM_FAIL_DELAY");
-	if (env_val) {
-		crt_swim_fail_delay = strtoul(env_val, &end, 0) ?: 10;
-		D_ERROR("*** CRT_SWIM_FAIL_DELAY=%lu\n", crt_swim_fail_delay);
+	while ((s = strtok_r(s, ",", &save_ptr)) != NULL) {
+		while (isspace(*s))
+			s++; /* skip space */
+		if (!strncasecmp(s, "delay=", 6)) {
+			crt_swim_fail_delay = strtoul(s + 6, &end, 0);
+			D_ERROR("*** CRT_SWIM_FAIL_DELAY=%lu\n",
+				crt_swim_fail_delay);
+		} else if (!strncasecmp(s, "rank=", 5)) {
+			crt_swim_fail_id = strtoul(s + 5, &end, 0);
+			D_ERROR("*** CRT_SWIM_FAIL_ID=%lu\n", crt_swim_fail_id);
+		}
+		s = NULL;
 	}
 
-	env_val = getenv("CRT_SWIM_FAIL_ID");
-	if (env_val) {
-		crt_swim_fail_id = strtoul(env_val, &end, 0);
-		D_ERROR("*** CRT_SWIM_FAIL_ID=%lu\n", crt_swim_fail_id);
-	}
+	D_FREE(s_saved);
 }
 
 static inline uint32_t
@@ -642,18 +646,25 @@ int crt_swim_init(int crt_ctx_idx)
 	if (!d_fault_inject_is_enabled())
 		D_GOTO(out, rc);
 
-	crt_swim_fault_init();
+	crt_swim_should_fail = false; /* disabled by default */
+	crt_swim_fail_hlc = 0;
+	crt_swim_fail_delay = 10;
+	crt_swim_fail_id = SWIM_ID_INVALID;
+
 	/* Search the attr in inject yml first */
 	d_fa_swim_drop_rpc = d_fault_attr_lookup(CRT_SWIM_FAIL_DROP_RPC);
 	if (d_fa_swim_drop_rpc != NULL) {
 		D_ERROR("*** fa_swim_drop_rpc: id=%u/0x%x, "
-			"interval=%u, max="DF_U64", x=%u, y=%u\n",
+			"interval=%u, max="DF_U64", x=%u, y=%u, args='%s'\n",
 			d_fa_swim_drop_rpc->fa_id,
 			d_fa_swim_drop_rpc->fa_id,
 			d_fa_swim_drop_rpc->fa_interval,
 			d_fa_swim_drop_rpc->fa_max_faults,
 			d_fa_swim_drop_rpc->fa_probability_x,
-			d_fa_swim_drop_rpc->fa_probability_y);
+			d_fa_swim_drop_rpc->fa_probability_y,
+			d_fa_swim_drop_rpc->fa_argument);
+		if (d_fa_swim_drop_rpc->fa_argument != NULL)
+			crt_swim_fault_init(d_fa_swim_drop_rpc->fa_argument);
 	}
 	D_GOTO(out, rc);
 
