@@ -231,7 +231,7 @@ CRT_RPC_DECLARE(rdb_requestvote, DAOS_ISEQ_RDB_REQUESTVOTE,
 
 #define DAOS_OSEQ_RDB_APPENDENTRIES /* output fields */		 \
 	((struct rdb_op_out)	(aeo_op)		CRT_VAR) \
-	((msg_appendentries_response_t) (aeo_msg)	CRT_VAR)
+	((msg_appendentries_response_t) (aeo_msg)	CRT_RAW)
 
 CRT_RPC_DECLARE(rdb_appendentries, DAOS_ISEQ_RDB_APPENDENTRIES,
 		DAOS_OSEQ_RDB_APPENDENTRIES)
