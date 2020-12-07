@@ -2,7 +2,7 @@
 
 import os
 
-HEADERS = ['daos.h', 'daos_api.h', 'daos_types.h', 'daos_errno.h', 'daos_kv.h',
+HEADERS = ['daos_types.h', 'daos_errno.h', 'daos_kv.h',
            'daos_event.h', 'daos_mgmt.h', 'daos_types.h', 'daos_array.h',
            'daos_task.h', 'daos_fs.h', 'daos_uns.h', 'daos_security.h',
            'daos_prop.h', 'daos_obj_class.h', 'daos_obj.h', 'daos_pool.h',
@@ -51,34 +51,6 @@ def scons():
     SConscript('vea/SConscript')
     SConscript('vos/SConscript')
 
-    # Build each DAOS component
-    SConscript('rsvc/SConscript')
-    SConscript('mgmt/SConscript')
-    SConscript('pool/SConscript')
-    SConscript('container/SConscript')
-    SConscript('placement/SConscript')
-    SConscript('dtx/SConscript')
-    SConscript('object/SConscript')
-    SConscript('rebuild/SConscript')
-    SConscript('security/SConscript')
-
-    # Build DAOS client libraries
-    SConscript('client/SConscript')
-
-    # rdb unit test rdbt depends on libdaos
-    SConscript('rdb/SConscript')
-
-    # Then the DAOS I/O server executable
-    SConscript('iosrv/SConscript')
-
-    # Build utilities
-    SConscript('utils/SConscript')
-
-    # Build the control plane components
-    SConscript('control/SConscript')
-
-    # Build test
-    SConscript('tests/SConscript')
 
     if not env.GetOption('clean') and not env.GetOption('help'):
 

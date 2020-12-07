@@ -30,7 +30,7 @@
 #include <daos/common.h>
 #include <daos/checksum.h>
 #include <daos/btree.h>
-#include <daos_types.h>
+//#include <daos_types.h>
 #include <daos_srv/vos.h>
 #include <vos_internal.h>
 

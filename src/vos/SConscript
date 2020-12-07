@@ -66,7 +66,7 @@ def scons():
     build_vos(denv, True)
     build_vos_internal(denv)
 
-    SConscript('tests/SConscript', exports='denv')
+    #SConscript('tests/SConscript', exports='denv')
 
 if __name__ == "SCons.Script":
     scons()

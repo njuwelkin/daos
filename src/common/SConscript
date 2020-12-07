@@ -76,9 +76,9 @@ def scons():
     tests_lib = daos_build.library(tenv, 'libdaos_tests', tests_lib_src)
     tenv.Install('$PREFIX/lib64/', tests_lib)
 
-    SConscript('tests/SConscript', exports='tenv')
+    #SConscript('tests/SConscript', exports='tenv')
 
-    build_dts_library(env)
+    #build_dts_library(env)
 
 if __name__ == "SCons.Script":
     scons()

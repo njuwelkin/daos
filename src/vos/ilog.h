@@ -29,7 +29,7 @@
 
 #ifndef __ILOG_H__
 #define __ILOG_H__
-#include <daos_types.h>
+//#include <daos_types.h>
 
 struct ilog_id {
 	/** DTX of entry */

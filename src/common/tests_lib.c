@@ -28,7 +28,7 @@
 #include <daos/common.h>
 #include <daos/object.h>
 #include <daos/tests_lib.h>
-#include <daos.h>
+//#include <daos.h>
 #include <gurt/debug.h>
 
 #define DTS_OCLASS_DEF		OC_RP_XSF

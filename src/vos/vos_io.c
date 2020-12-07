@@ -32,7 +32,6 @@
 #include <daos/btree.h>
 #include <daos_types.h>
 #include <daos_srv/vos.h>
-#include <daos.h>
 #include "vos_internal.h"
 #include "evt_priv.h"
 
